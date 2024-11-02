@@ -7,7 +7,9 @@
 #include "initialsolution.h"
 
 
-// Función para calcular la distancia euclidiana entre hoteles o entre hoteles y POIs
+// Funciones que calculan la distancia euclidiana entre dos puntos
+
+
 double calcularDistancia(const Hotel& h1, const Hotel& h2) {
     return std::sqrt((h1.x - h2.x) * (h1.x - h2.x) + (h1.y - h2.y) * (h1.y - h2.y));
 }
@@ -20,16 +22,27 @@ double calcularDistancia(const Hotel& h1, const POI& p1) {
     return std::sqrt((p1.x - h1.x) * (p1.x - h1.x) + (p1.y - h1.y) * (p1.y - h1.y));
 }
 
-std::vector<int> seleccionarHotelesAleatorios(int D, const std::vector<Hotel>& hoteles, const std::vector<double>& Td) {
-    std::vector<int> indicesSeleccionados;
-    indicesSeleccionados.push_back(0); // Siempre incluir el hotel inicial H0
+/**
+ * Selecciona hoteles de acuerdo a la cantidad de trips requeridos, siempre respetando el Td de cada trip
+ * @param D Cantidad de trips del tour
+ * @param hoteles Vector que almacena los hoteles disponibles para elegir
+ * @param Td Vector donde se almacena los tiempos máximos para cada trip
+ */
 
+std::vector<int> seleccionarHotelesAleatorios(int D, 
+                                                const std::vector<Hotel>& hoteles, 
+                                                const std::vector<double>& Td) {
+    
+    std::vector<int> indicesSeleccionados; // Acá se guardan los índices de los hoteles seleccionados
+    indicesSeleccionados.push_back(0); // Se incluye el hotel inicial H0
+
+    // Permite seleccionar hoteles al azar
     std::random_device rd; 
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distribucion(0, hoteles.size() - 1); // Desde H0 hasta el último hotel
+    std::uniform_int_distribution<> distribucion(0, hoteles.size() - 1); 
 
     while (indicesSeleccionados.size() < D) {
-        int nuevoHotel = distribucion(gen);
+        int nuevoHotel = distribucion(gen); // Se selecciona un hotel al azar
         bool cumpleCondicion = true;
 
         for (size_t i = 0; i < indicesSeleccionados.size(); ++i) {
@@ -46,6 +59,7 @@ std::vector<int> seleccionarHotelesAleatorios(int D, const std::vector<Hotel>& h
             }
         }
 
+        // Si la distancia es menor a Td, se ingresa como hotel seleccionado
         if (cumpleCondicion) {
             indicesSeleccionados.push_back(nuevoHotel);
         }
@@ -55,33 +69,56 @@ std::vector<int> seleccionarHotelesAleatorios(int D, const std::vector<Hotel>& h
     return indicesSeleccionados;
 }
 
-std::pair<std::vector<POI>, std::vector<int>> seleccionarPOIs(const Hotel& h1, const Hotel& h2, double Td, const std::vector<POI>& poisDisponibles, std::set<int>& indicesSeleccionados) {
-    std::vector<POI> poisSeleccionados;
-    std::vector<int> indicesSeleccionadosPOIs;
+/**
+ * Selecciona puntos de interés entre cada par de hoteles, siempre respetando el Td de cada trip
+ * @param h1, h2 Hotel de inicio y llegada del trip respectivamente
+ * @param Td Vector donde se almacena los tiempos máximos para cada trip
+ * @param pois Vector con todos los POIs
+ * @param indicesSeleccionados Set que guarda los índices de los POIs ya utilizados
+ */
+
+std::pair<std::vector<POI>, std::vector<int>> seleccionarPOIsAleatorios(const Hotel& h1, const Hotel& h2, 
+                                                                double Td, 
+                                                                const std::vector<POI>& pois,
+                                                                std::set<int>& indicesSeleccionados) {
+    
+    std::vector<POI> poisSeleccionados; // Acá se guarda la info de los POI seleccionados para el Trip
+    std::vector<int> indicesSeleccionadosTrip; // Acá se guardan los índices de los POI seleccionados para el Trip
+
+    // Permite seleccionar POI al azar
     std::random_device rd; 
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distribucion(0, poisDisponibles.size() - 1);
+    std::uniform_int_distribution<> distribucion(0, pois.size() - 1);
 
     double distanciaTotal = 0.0;
-    int contadorPOIs = 0;
+    int contadorPOIs = 0; // No permite trips vacíos
 
      while (true) {
-        if (poisDisponibles.empty()) break; // Verifica que haya POIs disponibles
-        int indicePOI = distribucion(gen);
+        int indicePOI = distribucion(gen); // Se selecciona un POI al azar
 
         // Verificar si el POI ya fue seleccionado
         if (indicesSeleccionados.find(indicePOI) == indicesSeleccionados.end()) {
-            POI nuevoPOI = poisDisponibles[indicePOI];
+
+            POI nuevoPOI = pois[indicePOI];
+
+            // Calcula distancia entre el último vértice y el POI. Si no hay POIs seleccionados,
+            // quiere decir que el último vértice es el hotel de inicio.
             double distanciaDesdeUltimo = (poisSeleccionados.empty()) ? 
                                            calcularDistancia(h1, nuevoPOI) : 
                                            calcularDistancia(poisSeleccionados.back(), nuevoPOI);
-            
+
+
+            // Si la distancia desde el primer hotel hasta el POI seleccionado es menor a Td...
              if (distanciaTotal + distanciaDesdeUltimo <= Td) {
+
+                //... Se revisa que deje tiempo disponible para llegar al hotel final.
                 double distanciaAlFinal = calcularDistancia(h2, nuevoPOI);
                 if (distanciaTotal + distanciaDesdeUltimo + distanciaAlFinal <= Td) {
+
+                    //Al cumplirse las dos condiciones, se agrega el punto de interés el trip.
                     poisSeleccionados.push_back(nuevoPOI);
                     indicesSeleccionados.insert(indicePOI);
-                    indicesSeleccionadosPOIs.push_back(indicePOI);
+                    indicesSeleccionadosTrip.push_back(indicePOI);
                     distanciaTotal += distanciaDesdeUltimo;
                     contadorPOIs++;
                 } else {
@@ -98,37 +135,47 @@ std::pair<std::vector<POI>, std::vector<int>> seleccionarPOIs(const Hotel& h1, c
         }
     }
 
-    return {poisSeleccionados, indicesSeleccionadosPOIs};
+    return {poisSeleccionados, indicesSeleccionadosTrip};
 }
 
-SolucionInicial generarSolucionInicial(const std::vector<Hotel>& hoteles, const std::vector<POI>& poisDisponibles, const std::vector<double>& Td, int D) {
-    std::vector<int> hotelesSeleccionados = seleccionarHotelesAleatorios(D, hoteles, Td);
+/**
+ * Se genera la solución inicial de manera aleatoria
+ * @param hoteles Vector que almacena los hoteles disponibles para elegir
+ * @param pois Vector con todos los POIs
+ * @param Td Vector donde se almacena los tiempos máximos para cada trip
+ * @param D Cantidad de trips del tour
+ */
 
-    std::set<int> indicesSeleccionados;
+SolucionInicial generarSolucionInicial(const std::vector<Hotel>& hoteles, 
+                                        const std::vector<POI>& pois, 
+                                        const std::vector<double>& Td, 
+                                        int D) {
+    std::vector<int> hotelesSeleccionados = seleccionarHotelesAleatorios(D, hoteles, Td);
+    std::set<int> indicesSeleccionados; // Acá se guardar los índices de los POIs ya utilizados
 
     SolucionInicial resultado;
     resultado.puntajeTotal = 0.0;
 
-    // Iterar sobre los pares de hoteles seleccionados
+    // Iterar sobre los pares de hoteles seleccionados, es decir, trabajará en cada Trip
     for (size_t i = 0; i < hotelesSeleccionados.size() - 1; ++i) {
         Hotel h1 = hoteles[hotelesSeleccionados[i]];
         Hotel h2 = hoteles[hotelesSeleccionados[i + 1]];
         double td = Td[i];
 
-
         // Seleccionar POIs entre h1 y h2
-        auto [poisEntre, indicesPOIs] = seleccionarPOIs(h1, h2, td, poisDisponibles, indicesSeleccionados);
+        auto [poisEntre, indicesPOIs] = seleccionarPOIsAleatorios(h1, h2, td, pois, indicesSeleccionados);
 
         // Agregar hotel y POIs al resultado final
         resultado.ruta.push_back("H" + std::to_string(hotelesSeleccionados[i]));
         for (const auto& index : indicesPOIs) {
-            resultado.ruta.push_back("P" + std::to_string(index)); // +1 para que sea 1-indexado
-            resultado.puntajeTotal += poisDisponibles[index].score; // Sumar el puntaje del POI
+            resultado.ruta.push_back("P" + std::to_string(index));
+            resultado.puntajeTotal += pois[index].score; // Sumar el puntaje del POI
         }
     }
 
     // Agregar el último hotel
     resultado.ruta.push_back("H" + std::to_string(hotelesSeleccionados.back()));
-    
     return resultado;
 }
+
+
