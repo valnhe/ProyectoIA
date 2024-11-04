@@ -18,8 +18,8 @@
 void instances(const std::string& nombreArchivo, 
                 int& N, int& H, int& D, 
                 double& Tmax, std::vector<double>& Td, 
-                std::vector<Hotel>& hoteles, 
-                std::vector<POI>& pois) {
+                std::vector<Vertex>& hoteles, 
+                std::vector<Vertex>& pois) {
 
     std::ifstream archivo(nombreArchivo);
     if (!archivo.is_open()) {
@@ -50,6 +50,9 @@ void instances(const std::string& nombreArchivo,
     for (int i = 0; i < H+2; ++i) {
         std::getline(archivo, linea);
         archivo >> hoteles[i].x >> hoteles[i].y >> hoteles[i].score;
+        hoteles[i].id = i;
+        hoteles[i].type = "H";
+
     }
 
     // Leer POIS
@@ -57,6 +60,9 @@ void instances(const std::string& nombreArchivo,
     for (int i = 0; i < N - 2; ++i) {
         std::getline(archivo, linea);
         archivo >> pois[i].x >> pois[i].y >> pois[i].score;
+        pois[i].id = i;
+        pois[i].type = "P";
+
     }
     
     archivo.close();

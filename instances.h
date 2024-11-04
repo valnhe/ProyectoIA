@@ -5,18 +5,19 @@
 #include <vector>
 #include <string>
 
-struct Hotel {
+struct Vertex {
+    std::string type; 
+    int id;
     double x;
     double y;
     int score;
 };
 
-struct POI {
-    double x;
-    double y;
-    int score;
+struct Solucion {
+    std::vector<Vertex> tour;  
+    double puntajeTotal;             
 };
 
-void instances(const std::string& nombreArchivo, int& N, int& H, int& D, double& Tmax, std::vector<double>& Td, std::vector<Hotel>& hoteles, std::vector<POI>& pois);
+void instances(const std::string& nombreArchivo, int& N, int& H, int& D, double& Tmax, std::vector<double>& Td, std::vector<Vertex>& hoteles, std::vector<Vertex>& pois);
 
 #endif 
