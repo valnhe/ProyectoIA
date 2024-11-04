@@ -5,11 +5,6 @@
 #include <string>
 #include "instances.h"
 
-struct SolucionInicial {
-    std::vector<std::string> ruta;  
-    double puntajeTotal;             
-};
-
-SolucionInicial generarSolucionInicial(const std::vector<Hotel>& hoteles, const std::vector<POI>& poisDisponibles, const std::vector<double>& Td, int D);
+Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles, const std::vector<Vertex>& poisDisponibles, const std::vector<double>& Td, int D);
 
 #endif
