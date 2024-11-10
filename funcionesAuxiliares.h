@@ -1,7 +1,7 @@
 #ifndef FUNCIONES_AUXILIARES_H
 #define FUNCIONES_AUXILIARES_H
 
-#include "instances.h"
+#include "readInstance.h"
 
 #include <cmath>
 

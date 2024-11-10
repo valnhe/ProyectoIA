@@ -7,9 +7,9 @@
 
 #include "hc.h"
 #include "funcionesAuxiliares.h"
-#include "instances.h"
+#include "readInstance.h"
 
-std::vector<Solucion> generarVecinos(const Solucion& solucionActual, const std::vector<Vertex>& todosPOIs, const std::vector<Vertex>& todosHoteles, const std::vector<double>& Td) {
+std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual, const std::vector<Vertex>& todosPOIs, const std::vector<Vertex>& todosHoteles, const std::vector<double>& Td) {
     std::vector<Solucion> vecinos;
     std::set<int> poisEnTour;
 
@@ -101,7 +101,7 @@ Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial,
     int iteracion = 0;
 
     while (iteracion < maxIter) {
-        std::vector<Solucion> vecinos = generarVecinos(solucionActual, pois, hoteles, Td);
+        std::vector<Solucion> vecinos = generarVecinosViaInsercion(solucionActual, pois, hoteles, Td);
 
         if (vecinos.empty()) {
             break; // No hay más vecinos que explorar
@@ -128,8 +128,7 @@ Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial,
         }
 
         // Imprimir el mejor vecino encontrado en esta iteración
-        std::cout << "\n" <<" >> Mejor vecino encontrado con puntaje total: " 
-                  << mejorVecino.puntajeTotal << "\n >> Tour: ";
+        std::cout << "\n" <<" >> Mejor vecino encontrado con puntaje total: " << mejorVecino.puntajeTotal << "\n >> Tour: ";
         for (const auto& vertex : mejorVecino.tour) {
             std::cout << vertex.type << vertex.id << " ";
         }
@@ -145,6 +144,8 @@ Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial,
 
         iteracion++;
     }
+
+    solucionActual.tiempoTotal = calcularDistanciaTotal(solucionActual.tour);
 
     return solucionActual; 
 }

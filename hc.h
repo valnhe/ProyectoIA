@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "instances.h"
+#include "readInstance.h"
 
 Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial, 
                       const std::vector<Vertex>& hoteles, const std::vector<Vertex>& pois, 

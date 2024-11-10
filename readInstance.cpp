@@ -1,4 +1,4 @@
-#include "instances.h"
+#include "readInstance.h"
 #include <iostream>
 #include <fstream>
 
@@ -45,7 +45,7 @@ void instances(const std::string& nombreArchivo,
 
     std::getline(archivo, linea);
 
-    // Leer hoteles fijos como extras
+    // Leer hoteles
     hoteles.resize(H + 2);
     for (int i = 0; i < H+2; ++i) {
         std::getline(archivo, linea);

@@ -3,8 +3,8 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
-#include "instances.h"
-#include "initialsolution.h"
+#include "readInstance.h"
+#include "randomSolution.h"
 #include "funcionesAuxiliares.h" 
 
 /**
@@ -14,7 +14,9 @@
  * @param Td Vector donde se almacena los tiempos máximos para cada trip
  */
 
-std::vector<Vertex> seleccionarHotelesAleatorios(int D, const std::vector<Vertex>& hoteles, const std::vector<double>& Td) {
+std::vector<Vertex> seleccionarHotelesAleatorios(int D, 
+                                                    const std::vector<Vertex>& hoteles, 
+                                                    const std::vector<double>& Td) {
     const int MAX_GLOBAL_ITER = 20; // Número máximo de iteraciones globales
 
     std::random_device rd; 
@@ -82,10 +84,11 @@ std::vector<Vertex> seleccionarHotelesAleatorios(int D, const std::vector<Vertex
  * @param indicesSeleccionados Set que guarda los índices de los POIs ya utilizados
  */
 
-std::vector<Vertex> creadorTrips(const Vertex& h1, const Vertex& h2, 
-                                                double Td, 
-                                                const std::vector<Vertex>& pois,
-                                                std::vector<Vertex>& poisSeleccionados) {
+std::vector<Vertex> creadorTrips(const Vertex& h1, 
+                                        const Vertex& h2, 
+                                        double Td, 
+                                        const std::vector<Vertex>& pois,
+                                        std::vector<Vertex>& poisSeleccionados) {
     
     // Permite seleccionar POI aHl azar
     std::random_device rd; 
@@ -124,8 +127,13 @@ std::vector<Vertex> creadorTrips(const Vertex& h1, const Vertex& h2,
         if (distancia < Td) {
             Trip.pop_back(); // Quito el último hotel y continuo ingresando POIs si aún me queda tiempo
         } else {
-            Trip.pop_back(); // Quito el último POI ingreso y el último Hotel ya que me pasé del tiempo.
+            Trip.pop_back(); // Quito el último POI ingresado y el último Hotel ya que me pasé del tiempo.
             Trip.pop_back();
+
+            // Si ya tengo al menos un POI, tengo lo suficiente para ser una solucion inicial
+            if (Trip.size() > 2) { 
+                break;
+            }
         }
     }
 
@@ -146,13 +154,12 @@ Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles,
                                         int D) {
     
     std::vector<Vertex> hotelesSeleccionados = seleccionarHotelesAleatorios(D, hoteles, Td);   
-
     std::vector<Vertex> poisSeleccionados; // Acá se guardar los índices de los POIs ya utilizados
 
     Solucion resultado;
     resultado.puntajeTotal = 0.0;
 
-    // Iterar sobre los pares de hoteles seleccionados, es decir, trabajará en cada Trip
+    // Iterar sobre los pares de hoteles seleccionados, es decir, se trabaja en cada Trip
     for (size_t i = 0; i < hotelesSeleccionados.size() - 1; ++i) {
 
         Vertex h1 = hotelesSeleccionados[i];
@@ -161,15 +168,16 @@ Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles,
 
         auto Trips = creadorTrips(h1, h2, td, pois, poisSeleccionados);
 
-        for (const auto& poi : Trips) {
-            resultado.tour.push_back(poi); // Agrega el POI al tour
-            resultado.puntajeTotal += poi.score; // Suma el puntaje del POI
+        for (const auto& ver : Trips) {
+            resultado.tour.push_back(ver); // Agrega el Vértice al tour
+            resultado.puntajeTotal += ver.score; // Suma el puntaje del Vértice
         }
     }
 
     // Agregar el último hotel
     Vertex hf = hotelesSeleccionados.back();
     resultado.tour.push_back(hf);
+    resultado.tiempoTotal = calcularDistanciaTotal(resultado.tour);
     
     return resultado;
 }

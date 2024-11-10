@@ -1,6 +1,6 @@
 // leerarchivo.h
-#ifndef INSTANCES_H
-#define INSTANCES_H
+#ifndef READ_INSTANCES_H
+#define READ_INSTANCES_H
 
 #include <vector>
 #include <string>
@@ -15,7 +15,8 @@ struct Vertex {
 
 struct Solucion {
     std::vector<Vertex> tour;  
-    double puntajeTotal;             
+    double puntajeTotal;      
+    double tiempoTotal;     
 };
 
 void instances(const std::string& nombreArchivo, int& N, int& H, int& D, double& Tmax, std::vector<double>& Td, std::vector<Vertex>& hoteles, std::vector<Vertex>& pois);

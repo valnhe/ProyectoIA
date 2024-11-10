@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "instances.h"
+#include "readInstance.h"
 
 Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles, const std::vector<Vertex>& poisDisponibles, const std::vector<double>& Td, int D);
 
