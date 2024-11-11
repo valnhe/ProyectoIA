@@ -1,5 +1,4 @@
 #include <random>
-#include <set>
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -34,27 +33,31 @@ std::vector<Vertex> seleccionarHotelesAleatorios(int D,
             int localIter = 0;
 
             while (hotelSinSeleccionar) {
+
+                // Se seleccionan hoteles al azar mientras queden pendientes
                 int indiceHotel = distribucion(gen);
                 Vertex nuevoHotel = hoteles[indiceHotel];
                 Vertex lastHotel = HotelesSeleccionados.back();
 
                 double distancia = calcularDistancia(lastHotel, nuevoHotel);
 
-                if (i == D-1) { // Verificar el penúltimo hotel
+                if (i == D-1) { // Verificar el penúltimo hotel (que cumpla con la distancia entre el hotel anterior y el último hotel)
                     double distanciaFinal = calcularDistancia(nuevoHotel, hoteles[1]);
 
                     if (distancia < Td[i-1] && distanciaFinal < Td[i]) {
                         HotelesSeleccionados.push_back(nuevoHotel);
-                        HotelesSeleccionados.push_back(hoteles[1]); 
+                        HotelesSeleccionados.push_back(hoteles[1]); // Se incluye el hotel final H1
                         hotelSinSeleccionar = false;
                     }
-                } else {
+                } else { // Verificar el cualquier otro hotel que no sea el penúltimo
                     if (distancia < Td[i-1]) {
                         HotelesSeleccionados.push_back(nuevoHotel);
                         hotelSinSeleccionar = false;
                     }
                 }
 
+                // Si tras 1000 iteraciones no se encuentra un hotel factible para
+                // cierta posición, simplemente se abandona esa búsqueda.
                 ++localIter;
                 if (localIter > 1000) {
                     validSelection = false;
@@ -62,16 +65,22 @@ std::vector<Vertex> seleccionarHotelesAleatorios(int D,
                 }
             }
 
+            // Si validSelection es false, quiere decir que no se logró encontrar
+            // una combinación factible, por lo que se comienza desde 0 e inicia otra
+            // iteración global.
             if (!validSelection) {
                 break;
             }
         }
 
+        // Si efectivamente se encuentra una combinación de hoteles factible,
+        // se retorna la combinación.
         if (validSelection) {
             return HotelesSeleccionados;
         }
     }
 
+    // Si tras 20 iteraciones globales no se encuentra nada:
     std::cout << "No se pudo encontrar una solución válida después de " << MAX_GLOBAL_ITER << " intentos." << std::endl;
     return {};
 }
@@ -90,7 +99,7 @@ std::vector<Vertex> creadorTrips(const Vertex& h1,
                                         const std::vector<Vertex>& pois,
                                         std::vector<Vertex>& poisSeleccionados) {
     
-    // Permite seleccionar POI aHl azar
+    // Permite seleccionar POI al azar
     std::random_device rd; 
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distribucion(0, pois.size() - 1);
@@ -119,18 +128,20 @@ std::vector<Vertex> creadorTrips(const Vertex& h1,
             }
         }
 
+        //Ingreso el nuevo POI y el último hotel
         Trip.push_back(nuevoPOI);
         Trip.push_back(h2);
 
         double distancia = calcularDistanciaTotal(Trip);
 
-        if (distancia < Td) {
+        if (distancia < Td) { // Si la distancia es menor, probablemente me quede espacio para seguir ingresando
             Trip.pop_back(); // Quito el último hotel y continuo ingresando POIs si aún me queda tiempo
         } else {
-            Trip.pop_back(); // Quito el último POI ingresado y el último Hotel ya que me pasé del tiempo.
+            Trip.pop_back(); // Quito el último POI ingresado y el último Hotel ya que se pasa del tiempo.
             Trip.pop_back();
 
             // Si ya tengo al menos un POI, tengo lo suficiente para ser una solucion inicial
+            // por lo que abandono la búsqueda.
             if (Trip.size() > 2) { 
                 break;
             }

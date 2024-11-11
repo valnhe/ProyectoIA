@@ -9,6 +9,16 @@
 #include "funcionesAuxiliares.h"
 #include "readInstance.h"
 
+
+/**
+ * Genero todos los vecinos al realizar el movimiento "Insertar Puntos de Interés"
+ *
+ * @param solucionActual Solución actual de una ejecución del Hill Climbing
+ * @param todosHoteles Vector que contiene todos los Hoteles
+ * @param pois Vector que contiene todos los puntos de Interés
+ * @param Td Vector que contiene los tiempos máximos de cada trip
+ *
+ */
 std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual, const std::vector<Vertex>& todosPOIs, const std::vector<Vertex>& todosHoteles, const std::vector<double>& Td) {
     std::vector<Solucion> vecinos;
     std::set<int> poisEnTour;
@@ -28,16 +38,13 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
             continue; // Saltar POIs que ya están en el tour
         }
 
-        //std::cout << "\n\n" << ">>>POI " << poi.id << "\n";
-
-        ///Solucion vacia, puntaje total = 0
+        // Solución vacía
         Solucion bestPosition;
         bestPosition.puntajeTotal = 0.0;
         double mejorAumento = std::numeric_limits<double>::max();
 
         for (int i=0; i<tripsSeparados.size();i++) {
 
-            //std::cout << "\n" <<">>Trip " << i + 1<< "\n";
             std::vector<Vertex> trip = tripsSeparados[i];
             double initialDistance = calcularDistanciaTotal(trip);
 
@@ -46,24 +53,9 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
                 newTrip.insert(newTrip.begin() + j, poi); // Insertar el POI en la posición j
                     
                 double totalDistance = calcularDistanciaTotal(newTrip);
-
-                //std::cout << ">Iter " << j << "\n\n";
-                //for (const auto& item : newTrip) {
-                    //std::cout << item.type << item.id << " ";
-                //}
-    
                 double aumento = totalDistance - initialDistance;
-                
-                //std::cout <<  "\n" << "Tiempo max" << Td[i] << "|";
-                //std::cout << "Aumento" << aumento << "|";
-                //std::cout << "Tiempo total" << totalDistance << "\n";
 
                 if (totalDistance <= Td[i] && aumento < mejorAumento) {
-
-                    //std::cout << "Aumento MEJOR" << aumento << "|";
-                    //std::cout << "Tiempo total MEJOR" << totalDistance << "\n";
-                    // Comprobar si el aumento es menor que el mejor aumento encontrado hasta ahora
-                    
                     mejorAumento = aumento; // Actualizar el mejor aumento
 
                     std::vector<Vertex> nuevoTour;
@@ -76,9 +68,9 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
                         }
                     }
                     nuevoTour.push_back(tripsSeparados.back().back()); // Agregar el último hotel del tour
-
                     bestPosition.tour = nuevoTour;
                     bestPosition.puntajeTotal = calcularPuntajeTotal(bestPosition.tour); 
+
                                    
                 }
             }
@@ -93,22 +85,40 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
     return vecinos;
 }
 
+/**
+ * Ejecuta el Hill Climbing + MM
+ *
+ * @param restart Cantidad máxima de restarts del Hill Climbing (Sin implementar)
+ * @param maxIter Cantidad máxima de iteraciones del Hill Climbing
+ * @param solucionInicial Solución inicial de una ejecución del Hill Climbing
+ * @param hoteles Vector que contiene todos los hoteles
+ * @param pois Vector que contiene los puntos de interés (POIs)ttodos los POIs
+ * @param Td Vector que contiene los tiempos máximos para cada trip
+ * @param D Variable donde se almacenará el número total de trips del tour
+ *
+ */
+
 Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial, 
                       const std::vector<Vertex>& hoteles, const std::vector<Vertex>& pois, 
                       const std::vector<double>& Td, int D) {
     
+    //Se recibe la solInicial desde fuera, pero se debiera calcular aquí por los restart
+    //Trabajo pendiente
     Solucion solucionActual = solucionInicial;
     int iteracion = 0;
 
     while (iteracion < maxIter) {
+
+        //Se generan todos los vecinos
         std::vector<Solucion> vecinos = generarVecinosViaInsercion(solucionActual, pois, hoteles, Td);
 
         if (vecinos.empty()) {
-            break; // No hay más vecinos que explorar
+            break; // No hay más vecinos
         }
 
         std::cout << "\n>> Iteración " << iteracion + 1;
 
+        //Para ver todos los vecinos generados, se borrará luego.
         if (vecinos.size() > 0) { 
             std::cout << "\nVecinos generados:\n";
             for (const auto& vecino : vecinos) {
@@ -120,7 +130,7 @@ Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial,
             }
         }
 
-        Solucion mejorVecino = vecinos[0];
+        Solucion mejorVecino = solucionActual;
         for (const auto& vecino : vecinos) {
             if (vecino.puntajeTotal > mejorVecino.puntajeTotal) {
                 mejorVecino = vecino;
@@ -134,6 +144,7 @@ Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial,
         }
         std::cout << std::endl;
 
+        //Solo si se encuentra un mejor vecino, se continua con la iteración
         if (mejorVecino.puntajeTotal > solucionActual.puntajeTotal) {
             solucionActual = mejorVecino;
             std::cout << " > El mejor vecino es mejor que la solución actual.\n";
@@ -145,8 +156,8 @@ Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial,
         iteracion++;
     }
 
+    //Se calcula el tiempoTotal de la soluciónActual y se retorna
     solucionActual.tiempoTotal = calcularDistanciaTotal(solucionActual.tour);
-
     return solucionActual; 
 }
 
