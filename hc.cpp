@@ -1,13 +1,145 @@
 #include <vector>
 #include <iostream>
+#include <random>
 #include <cmath>
 #include <set>
 #include <algorithm>
 #include <limits>
 
 #include "hc.h"
+#include "randomSolution.h"
 #include "funcionesAuxiliares.h"
 #include "readInstance.h"
+
+Solucion hotelImprovement (Solucion solucionInicial, int D, const std::vector<Vertex>& hoteles, const std::vector<double>& Td) {
+    Solucion solucionActual = solucionInicial;
+    int iteracion = 0;
+    int maxIter = 100;
+
+    while (iteracion < maxIter) {
+
+        //El primer hotel del tour tiene índice 0, segundo índice 1, así sucesivamente. 
+        //Los que tengan índice 0 y D, son H0 y H1 respectivamente (inicial y final), por lo que
+        //no se pueden cambiar y se ignoran en la distribución.
+
+        std::random_device rd; 
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> distribucion(1, D - 1);
+        int indiceHotelAMejorar = distribucion(gen);
+
+        int indiceRealHotelAMejorar = 0;
+        int contadorHoteles = 0;
+
+        for (int i = 0; i < solucionActual.tour.size(); ++i) {
+            if (solucionActual.tour[i].type == "H") {
+                if (contadorHoteles == indiceHotelAMejorar) {
+                    indiceRealHotelAMejorar = i;
+                    break;
+                }
+                contadorHoteles++;
+            }
+        }
+
+        //std::cout << "\n>> indiceHotelAMejorar: " << indiceHotelAMejorar <<"\n";
+
+        std::vector<Solucion> vecinos;
+
+        for (int i = 0; i < hoteles.size() ; i++) {
+            Solucion vecino = solucionActual;
+
+            if (i == vecino.tour[indiceRealHotelAMejorar].id) {
+                continue;
+            }
+            // Reemplazar el hotel seleccionado por el nuevo hotel
+            vecino.tour[indiceRealHotelAMejorar] = hoteles[i];
+
+            std::vector<std::vector<Vertex>> tripsSeparados = dividirVector(vecino.tour);
+
+            bool isValid = true;
+            for (int i = 0; i<Td.size(); i++) {
+                std::vector<Vertex> trip = tripsSeparados[i];
+                double tripDistance = calcularDistanciaTotal(trip);
+
+                if (tripDistance > Td[i]) {
+                    isValid = false;
+                }
+            }
+
+            if (isValid) {
+                vecino.puntajeTotal = calcularPuntajeTotal(vecino.tour); 
+                vecino.tiempoTotal = calcularDistanciaTotal(vecino.tour); 
+                vecinos.push_back(vecino);
+            }
+            
+        }
+
+        /*
+        std::cout << ">> Vecinos factibles: " << "\n";
+        for (const auto& vecino : vecinos) {
+            std::cout << "Tour: ";
+            for (const auto& vertex : vecino.tour) {
+                std::cout << vertex.type << vertex.id << " ";
+            }
+            std::cout << " | Distancia Total: " << vecino.tiempoTotal << "\n";
+        }
+        */
+
+        Solucion mejorVecino = solucionActual;
+        mejorVecino.tiempoTotal = std::numeric_limits<double>::max();
+
+        for (const auto& vecino : vecinos) {
+            if (vecino.tiempoTotal < mejorVecino.tiempoTotal) {
+                mejorVecino = vecino;
+            }
+        }
+
+        /*
+        if (mejorVecino.tiempoTotal == std::numeric_limits<double>::max()) {
+            std::cout << "\n" <<" >> No existen movimientos factibles";
+        } else {
+            std::cout << "\n" <<" >> Mejor vecino encontrado con distancia total: " << mejorVecino.tiempoTotal << "\n >> Tour: ";
+            for (const auto& vertex : mejorVecino.tour) {
+                std::cout << vertex.type << vertex.id << " ";
+            }
+            std::cout << std::endl;
+        }
+        */
+            
+        //Solo si se encuentra un mejor vecino, se continua con la iteración
+        if (mejorVecino.tiempoTotal < solucionActual.tiempoTotal) {
+            solucionActual = mejorVecino;
+            //std::cout << " > El mejor vecino es mejor que la solución actual.\n";
+        } else {
+            //std::cout << " > No se encontraron vecinos mejor que la solución actual.\n";
+            break; // No hay mejora, salir del bucle
+        }
+
+        iteracion++;
+    }
+    return solucionActual;
+}
+
+
+Solucion swap(Solucion solucionActual) {
+    Solucion mejorSolucion = solucionActual;
+    double mejorTiempo = std::numeric_limits<double>::max();
+
+    std::vector<std::vector<Vertex>> trips = dividirVector(solucionActual.tour);
+
+    for (auto& trip:trips) {
+        for (size_t i = 1; i < trip.size() - 1; i++) {
+            for (size_t j = i + 1; j < trip.size() - 1; ++j) {
+                std::swap(trip[i], trip[j]);
+
+                
+
+                std::swap(trip[i], trip[j]);
+            }
+        }
+    }
+
+    return mejorSolucion;
+}
 
 
 /**
@@ -70,8 +202,7 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
                     nuevoTour.push_back(tripsSeparados.back().back()); // Agregar el último hotel del tour
                     bestPosition.tour = nuevoTour;
                     bestPosition.puntajeTotal = calcularPuntajeTotal(bestPosition.tour); 
-
-                                   
+                    bestPosition.tiempoTotal = calcularDistanciaTotal(bestPosition.tour);
                 }
             }
 
@@ -98,67 +229,94 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
  *
  */
 
-Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial, 
+std::vector<Solucion> hillClimbing(int maxRestart, int maxIter,
                       const std::vector<Vertex>& hoteles, const std::vector<Vertex>& pois, 
                       const std::vector<double>& Td, int D) {
     
     //Se recibe la solInicial desde fuera, pero se debiera calcular aquí por los restart
     //Trabajo pendiente
-    Solucion solucionActual = solucionInicial;
-    int iteracion = 0;
 
-    while (iteracion < maxIter) {
+    int restart = 0;
+    std::vector<Solucion> solucionesGuardadas;
 
-        //Se generan todos los vecinos
-        std::vector<Solucion> vecinos = generarVecinosViaInsercion(solucionActual, pois, hoteles, Td);
+    while (restart < maxRestart) {
 
-        if (vecinos.empty()) {
-            break; // No hay más vecinos
-        }
+        Solucion solucionActual = generarSolucionInicial(hoteles, pois, Td, D);
+        int iteracion = 0;
 
-        std::cout << "\n>> Iteración " << iteracion + 1;
+        while (iteracion < maxIter) {
+            //Se generan todos los vecinos
+            std::vector<Solucion> vecinos = generarVecinosViaInsercion(solucionActual, pois, hoteles, Td);
 
-        //Para ver todos los vecinos generados, se borrará luego.
-        if (vecinos.size() > 0) { 
-            std::cout << "\nVecinos generados:\n";
-            for (const auto& vecino : vecinos) {
-                std::cout << "Tour: ";
-                for (const auto& vertex : vecino.tour) {
-                    std::cout << vertex.type << vertex.id << " ";
+            if (vecinos.empty()) {
+                break; // No hay más vecinos
+            }
+
+            //std::cout << "\n>> Iteración " << iteracion + 1;
+
+            //Para ver todos los vecinos generados, se borrará luego.
+            /*
+            if (vecinos.size() > 0) { 
+                std::cout << "\nVecinos generados:\n";
+                for (const auto& vecino : vecinos) {
+                    std::cout << "Tour: ";
+                    for (const auto& vertex : vecino.tour) {
+                        std::cout << vertex.type << vertex.id << " ";
+                    }
+                    std::cout << std::endl;
+                    std::cout << " | Puntaje Total: " << vecino.puntajeTotal << "\n";
+                    std::cout << " | Distancia Total: " << vecino.tiempoTotal << "\n";
+
                 }
-            std::cout << " | Puntaje Total: " << vecino.puntajeTotal << "\n";
             }
-        }
+            */
 
-        Solucion mejorVecino = solucionActual;
-        for (const auto& vecino : vecinos) {
-            if (vecino.puntajeTotal > mejorVecino.puntajeTotal) {
-                mejorVecino = vecino;
+            Solucion mejorVecino = solucionActual;
+            for (const auto& vecino : vecinos) {
+                if (vecino.puntajeTotal > mejorVecino.puntajeTotal) {
+                    mejorVecino = vecino;
+                }
             }
-        }
 
-        // Imprimir el mejor vecino encontrado en esta iteración
-        std::cout << "\n" <<" >> Mejor vecino encontrado con puntaje total: " << mejorVecino.puntajeTotal << "\n >> Tour: ";
-        for (const auto& vertex : mejorVecino.tour) {
-            std::cout << vertex.type << vertex.id << " ";
-        }
-        std::cout << std::endl;
+            // Imprimir el mejor vecino encontrado en esta iteración
+            /*
+            std::cout << "\n" <<" >> Mejor vecino encontrado con puntaje total: " << mejorVecino.puntajeTotal << "\n >> Tour: ";
+            for (const auto& vertex : mejorVecino.tour) {
+                std::cout << vertex.type << vertex.id << " ";
+            }
+            std::cout << std::endl;
+            */
 
-        //Solo si se encuentra un mejor vecino, se continua con la iteración
-        if (mejorVecino.puntajeTotal > solucionActual.puntajeTotal) {
-            solucionActual = mejorVecino;
-            std::cout << " > El mejor vecino es mejor que la solución actual.\n";
-        } else {
-            std::cout << " > No se encontraron vecinos mejor que la solución actual.\n";
-            break; // No hay mejora, salir del bucle
-        }
+            //Solo si se encuentra un mejor vecino, se continua con la iteración
+            if (mejorVecino.puntajeTotal > solucionActual.puntajeTotal) {
+                solucionActual = mejorVecino;
+                //std::cout << " > El mejor vecino es mejor que la solución actual.\n";
+            } else {
+                //std::cout << " > No se encontraron vecinos mejor que la solución actual.\n";
+                break; // No hay mejora, salir del bucle
+            }    
 
-        iteracion++;
+            std::random_device rd; 
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> distribucion(0, 2);
+            double probabilidad = distribucion(gen);
+
+
+            if (probabilidad < 2) {
+                //std::cout << "\n>> Postprocesamiento Iteración " << iteracion + 1;
+                //std::cout << "\n>> Tiempo sol actual: " << solucionActual.tiempoTotal << "\n";
+                solucionActual = hotelImprovement(solucionActual, D, hoteles, Td);
+                
+            } else {
+                //std::cout << "bbbb" << std::endl;
+            }
+
+            iteracion++;
     }
-
-    //Se calcula el tiempoTotal de la soluciónActual y se retorna
-    solucionActual.tiempoTotal = calcularDistanciaTotal(solucionActual.tour);
-    return solucionActual; 
+        solucionesGuardadas.push_back(solucionActual);
+        restart++;
+    }
+    return solucionesGuardadas; 
 }
 
 

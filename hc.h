@@ -5,7 +5,7 @@
 #include <string>
 #include "readInstance.h"
 
-Solucion hillClimbing(int restart, int maxIter, const Solucion& solucionInicial, 
+std::vector<Solucion> hillClimbing(int restart, int maxIter,
                       const std::vector<Vertex>& hoteles, const std::vector<Vertex>& pois, 
                       const std::vector<double>& Td, int D);
 
