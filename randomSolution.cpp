@@ -1,7 +1,7 @@
 #include <random>
+#include <cmath>
 #include <vector>
 #include <iostream>
-#include <cmath>
 #include "readInstance.h"
 #include "randomSolution.h"
 #include "funcionesAuxiliares.h" 
@@ -108,7 +108,7 @@ std::vector<Vertex> creadorTrips(const Vertex& h1,
     Trip.push_back(h1);
 
     int MAX_ITER = 0;
-    while (MAX_ITER < 100) {
+    while (MAX_ITER < 5000) {
 
         MAX_ITER += 1;
 
@@ -120,12 +120,18 @@ std::vector<Vertex> creadorTrips(const Vertex& h1,
 
         int indicePOI = distribucion(gen); // Se selecciona un POI al azar
         Vertex nuevoPOI = pois[indicePOI];
-
+        
         // Verificar si el POI ya fue seleccionado
+
+        bool exists = false;
         for (const Vertex& poi : poisSeleccionados) {
             if (poi.id == nuevoPOI.id) {
-                break; // Salir del bucle si se encuentra el POI
+                exists = true; // Salir del bucle si se encuentra el POI
             }
+        }
+
+        if (exists) {
+            break;
         }
 
         //Ingreso el nuevo POI y el último hotel
@@ -136,6 +142,7 @@ std::vector<Vertex> creadorTrips(const Vertex& h1,
 
         if (distancia < Td) { // Si la distancia es menor, probablemente me quede espacio para seguir ingresando
             Trip.pop_back(); // Quito el último hotel y continuo ingresando POIs si aún me queda tiempo
+            poisSeleccionados.push_back(nuevoPOI);
         } else {
             Trip.pop_back(); // Quito el último POI ingresado y el último Hotel ya que se pasa del tiempo.
             Trip.pop_back();
