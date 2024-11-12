@@ -79,6 +79,6 @@ void printearSoluciones (const Solucion& sol) {
         std::cout << item.type << item.id << " ";
 
     }
-    std::cout << "\n" <<  " Puntaje total Solución Final: " << sol.puntajeTotal << std::endl;
+    std::cout << "\n" <<  " Puntaje total recolectado: " << sol.puntajeTotal << std::endl;
     std::cout << " Tiempo total utilizado: " << sol.tiempoTotal << std::endl;
 }
