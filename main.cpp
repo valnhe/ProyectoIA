@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     std::vector<Vertex> hoteles;
     std::vector<Vertex> pois;
 
-    int restart = 400;
+    int restart = 5000;
     int MAX_ITER = 100;
 
     instances(nombreArchivo, N, H, D, Tmax, Td, hoteles, pois); //Ler achivo de instancia

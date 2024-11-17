@@ -31,7 +31,6 @@ std::vector<Vertex> swapTrip(const std::vector<Vertex>& trip, double Td) {
         // >> Búsqueda de vecinos
         std::vector<std::vector<Vertex>> vecinos;
         std::vector<Vertex> vecino = tripActual;
-        double tiempoTotalVecino = calcularDistanciaTotal(tripActual);
 
         for (size_t j = 1; j < tripActual.size() - 2; ++j) { // Ignorar el primer y último elemento del trip ya que son hoteles
             std::swap(vecino[j], vecino[j + 1]); // Swaps entre puntos de interés continuos
@@ -280,7 +279,7 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
 /**
  * Ejecuta el Hill Climbing + MM
  *
- * @param restart Cantidad máxima de restarts del Hill Climbing
+ * @param restart Cantidad máxima de restarts del Hill Climbing (Sin implementar)
  * @param maxIter Cantidad máxima de iteraciones del Hill Climbing
  * @param hoteles Vector que contiene todos los hoteles
  * @param pois Vector que contiene los puntos de interés (POIs)ttodos los POIs
@@ -336,6 +335,7 @@ std::vector<Solucion> hillClimbing(int maxRestart, int maxIter,
             } else {
                 solucionActual = swapTour(solucionActual, Td);
             }
+
             iteracion++;
     }
         solucionesGuardadas.push_back(solucionActual);

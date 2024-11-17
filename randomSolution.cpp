@@ -16,7 +16,7 @@
 std::vector<Vertex> seleccionarHotelesAleatorios(int D, 
                                                     const std::vector<Vertex>& hoteles, 
                                                     const std::vector<double>& Td) {
-    const int MAX_GLOBAL_ITER = 20; // Número máximo de iteraciones globales
+    const int MAX_GLOBAL_ITER = 100; // Número máximo de iteraciones globales
 
     std::random_device rd; 
     std::mt19937 gen(rd());
@@ -176,27 +176,31 @@ Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles,
     Solucion resultado;
     resultado.puntajeTotal = 0.0;
 
-    // Iterar sobre los pares de hoteles seleccionados, es decir, se trabaja en cada Trip
-    for (size_t i = 0; i < hotelesSeleccionados.size() - 1; ++i) {
+    if (hoteles.size() > 1) {
+        // Iterar sobre los pares de hoteles seleccionados, es decir, se trabaja en cada Trip
+        for (size_t i = 0; i < hotelesSeleccionados.size() - 1; ++i) {
 
-        Vertex h1 = hotelesSeleccionados[i];
-        Vertex h2 = hotelesSeleccionados[i + 1];
-        double td = Td[i];
+            Vertex h1 = hotelesSeleccionados[i];
+            Vertex h2 = hotelesSeleccionados[i + 1];
+            double td = Td[i];
 
-        auto Trips = creadorTrips(h1, h2, td, pois, poisSeleccionados);
+            auto Trips = creadorTrips(h1, h2, td, pois, poisSeleccionados);
 
-        for (const auto& ver : Trips) {
-            resultado.tour.push_back(ver); // Agrega el Vértice al tour
-            resultado.puntajeTotal += ver.score; // Suma el puntaje del Vértice
+            for (const auto& ver : Trips) {
+                resultado.tour.push_back(ver); // Agrega el Vértice al tour
+                resultado.puntajeTotal += ver.score; // Suma el puntaje del Vértice
+            }
         }
+
+        // Agregar el último hotel
+        Vertex hf = hotelesSeleccionados.back();
+        resultado.tour.push_back(hf);
+        resultado.tiempoTotal = calcularDistanciaTotal(resultado.tour);
+        
+        return resultado;
     }
 
-    // Agregar el último hotel
-    Vertex hf = hotelesSeleccionados.back();
-    resultado.tour.push_back(hf);
-    resultado.tiempoTotal = calcularDistanciaTotal(resultado.tour);
-    
-    return resultado;
+    return {};
 }
 
 

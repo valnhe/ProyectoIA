@@ -15,7 +15,7 @@ HillClimbing.o: HillClimbing.h
 clean:
 	rm -f *~
 	rm -f proyecto \
-	      readInstance.o main.o randomSolution.o hc.o funcionesAuxiliares.o
+	      readInstance.o main.o randomSolution.o HillClimbing.o funcionesAuxiliares.o
 
 format:
 	clang-format -i *.h *.cc
