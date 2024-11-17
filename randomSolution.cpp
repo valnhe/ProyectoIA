@@ -27,14 +27,12 @@ std::vector<Vertex> seleccionarHotelesAleatorios(int D,
         HotelesSeleccionados.push_back(hoteles[0]); // Se incluye el hotel inicial H0
 
         bool validSelection = true;
-
-        for (int i = 1; i < D; ++i) {
+        for (int i = 1; i < D; ++i) {  // Para cada trip
             bool hotelSinSeleccionar = true;
             int localIter = 0;
 
-            while (hotelSinSeleccionar) {
+            while (hotelSinSeleccionar) { // Se seleccionan hoteles al azar mientras quede pendiente
 
-                // Se seleccionan hoteles al azar mientras queden pendientes
                 int indiceHotel = distribucion(gen);
                 Vertex nuevoHotel = hoteles[indiceHotel];
                 Vertex lastHotel = HotelesSeleccionados.back();
@@ -49,7 +47,8 @@ std::vector<Vertex> seleccionarHotelesAleatorios(int D,
                         HotelesSeleccionados.push_back(hoteles[1]); // Se incluye el hotel final H1
                         hotelSinSeleccionar = false;
                     }
-                } else { // Verificar el cualquier otro hotel que no sea el penúltimo
+
+                } else { // Verificar cualquier otro hotel que no sea el penúltimo
                     if (distancia < Td[i-1]) {
                         HotelesSeleccionados.push_back(nuevoHotel);
                         hotelSinSeleccionar = false;
@@ -81,7 +80,7 @@ std::vector<Vertex> seleccionarHotelesAleatorios(int D,
     }
 
     // Si tras 20 iteraciones globales no se encuentra nada:
-    std::cout << "No se pudo encontrar una solución válida después de " << MAX_GLOBAL_ITER << " intentos." << std::endl;
+    std::cout << "No se pudo encontrar una combinación válida de hoteles después de " << MAX_GLOBAL_ITER << " intentos." << std::endl;
     return {};
 }
 
@@ -130,7 +129,7 @@ std::vector<Vertex> creadorTrips(const Vertex& h1,
             }
         }
 
-        if (exists) {
+        if (exists || verificarChoques(nuevoPOI, Trip)) {
             break;
         }
 
@@ -172,7 +171,7 @@ Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles,
                                         int D) {
     
     std::vector<Vertex> hotelesSeleccionados = seleccionarHotelesAleatorios(D, hoteles, Td);   
-    std::vector<Vertex> poisSeleccionados; // Acá se guardar los índices de los POIs ya utilizados
+    std::vector<Vertex> poisSeleccionados; // Acá se guardan los índices de los POIs ya utilizados
 
     Solucion resultado;
     resultado.puntajeTotal = 0.0;
