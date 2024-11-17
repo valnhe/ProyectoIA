@@ -280,9 +280,8 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
 /**
  * Ejecuta el Hill Climbing + MM
  *
- * @param restart Cantidad máxima de restarts del Hill Climbing (Sin implementar)
+ * @param restart Cantidad máxima de restarts del Hill Climbing
  * @param maxIter Cantidad máxima de iteraciones del Hill Climbing
- * @param solucionInicial Solución inicial de una ejecución del Hill Climbing
  * @param hoteles Vector que contiene todos los hoteles
  * @param pois Vector que contiene los puntos de interés (POIs)ttodos los POIs
  * @param Td Vector que contiene los tiempos máximos para cada trip
