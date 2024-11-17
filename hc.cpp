@@ -11,14 +11,120 @@
 #include "funcionesAuxiliares.h"
 #include "readInstance.h"
 
-Solucion hotelImprovement (Solucion solucionInicial, int D, const std::vector<Vertex>& hoteles, const std::vector<double>& Td) {
-    Solucion solucionActual = solucionInicial;
+/**
+ * Realiza un Hill Climbing en un trip individual a través del movimiento swap. La función busca
+ * mejorar el trip realizando intercambios de puntos de interés y comparando la distancia total
+ * con el límite Td dado.
+ *
+ * @param trip Trip individual a ser optimizado
+ * @param Td Tiempo máximo permitido para el trip
+ */
+
+std::vector<Vertex> swapTrip(const std::vector<Vertex>& trip, double Td) {
+    
+    int maxIter = 100;
+    int iteracion = 0;
+    std::vector<Vertex> tripActual = trip;
+
+    while (iteracion < maxIter) {
+
+        // >> Búsqueda de vecinos
+        std::vector<std::vector<Vertex>> vecinos;
+        std::vector<Vertex> vecino = tripActual;
+        double tiempoTotalVecino = calcularDistanciaTotal(tripActual);
+
+        for (size_t j = 1; j < tripActual.size() - 2; ++j) { // Ignorar el primer y último elemento del trip ya que son hoteles
+            std::swap(vecino[j], vecino[j + 1]); // Swaps entre puntos de interés continuos
+
+            double newTripDistance = calcularDistanciaTotal(vecino);
+            if (newTripDistance <= Td) { //Se revisa si es factible
+                vecinos.push_back(vecino);
+            }
+
+            std::swap(vecino[j], vecino[j + 1]); // Revertir el swap
+        }
+
+        std::swap(vecino[1], vecino[trip.size() - 2]); // Swap entre el primer y el último punto de interés
+        double newTripDistance = calcularDistanciaTotal(vecino);
+        if (newTripDistance <= Td) { //Se revisa si es factible
+            vecinos.push_back(vecino);
+        }
+        std::swap(vecino[1], vecino[trip.size() - 2]); // Revertir el swap
+    
+        // >> Búsqueda del mejor vecino
+        std::vector<Vertex> mejorVecino = tripActual;
+        double tiempoTotalMejorVecino = std::numeric_limits<double>::max();
+
+        for (const auto& vecino : vecinos) { // Buscar el mejor vecino
+            double tiempoVecino = calcularDistanciaTotal(vecino);
+            if (tiempoVecino < tiempoTotalMejorVecino) {
+                mejorVecino = vecino;
+                tiempoTotalMejorVecino = tiempoVecino;
+            }
+        }
+
+        if (tiempoTotalMejorVecino < calcularDistanciaTotal(tripActual)) { // Si encontramos un mejor vecino, iteramos nuevamente
+            tripActual = mejorVecino;
+        } else {
+            break; // En caso contrario, no hay más mejoras y acaba el HC
+        }
+    }
+    
+    return tripActual;
+}
+
+/**
+ * Se hace un HC individual en cada Trip a través del movimiento swap vía la función
+ * "swapTrip". La función "swapTour" como tal junta toda la información recolectada 
+ * y retorna una solución con el mejoramiento (si existe) del tour en su totalidad.
+ *
+ * @param solucionAct Solución actual de una ejecución del Hill Climbing recibida por swapTour
+ * @param Td Vector que contiene los tiempos máximos de cada trip
+ */
+
+Solucion swapTour(Solucion solucionActual, const std::vector<double>& Td) {
+    Solucion solucionSwap;
+    std::vector<std::vector<Vertex>> tripsSeparados = dividirVector(solucionActual.tour);
+
+    for (size_t i = 0; i < Td.size(); ++i) {
+        std::vector<Vertex> trip = tripsSeparados[i];
+
+        if (trip.size() > 2) { // Solo trabajar con el trip si tiene puntos de interés
+            trip = swapTrip(trip, Td[i]);
+        }
+
+        // Agregar el trip (sin el último vértice para evitar duplicados)
+        trip.pop_back();
+        solucionSwap.tour.insert(solucionSwap.tour.end(), trip.begin(), trip.end());
+    }
+
+    // Agregar el último hotel y calcular todo lo necesario
+    solucionSwap.tour.push_back(solucionActual.tour.back());
+    solucionSwap.puntajeTotal = calcularPuntajeTotal(solucionSwap.tour);
+    solucionSwap.tiempoTotal = calcularDistanciaTotal(solucionSwap.tour);
+
+    return solucionSwap;
+}
+
+/**
+ * Se mejoran los hoteles. Se selecciona un hotel al azar, y se buscan todos los
+ * vecinos factibles para reemplazar.
+ *
+ * @param solucionAct Solución actual de una ejecución del Hill Climbing recibida por hotelImprovement
+ * @param D Variable donde se almacenará el número total de trips del tour
+ * @param todosHoteles Vector que contiene todos los Hoteles
+ * @param Td Vector que contiene los tiempos máximos de cada trip
+ *
+ */
+
+Solucion hotelImprovement (Solucion solucionAct, int D, const std::vector<Vertex>& hoteles, const std::vector<double>& Td) {
+    Solucion solucionActual = solucionAct;
     int iteracion = 0;
     int maxIter = 100;
 
     while (iteracion < maxIter) {
 
-        //El primer hotel del tour tiene índice 0, segundo índice 1, así sucesivamente. 
+        //El primer hotel del tour tiene índice 0, el segundo índice 1, así sucesivamente. 
         //Los que tengan índice 0 y D, son H0 y H1 respectivamente (inicial y final), por lo que
         //no se pueden cambiar y se ignoran en la distribución.
 
@@ -30,6 +136,7 @@ Solucion hotelImprovement (Solucion solucionInicial, int D, const std::vector<Ve
         int indiceRealHotelAMejorar = 0;
         int contadorHoteles = 0;
 
+        //Se busca en que posición está el hotel que se cambiará en el tour
         for (int i = 0; i < solucionActual.tour.size(); ++i) {
             if (solucionActual.tour[i].type == "H") {
                 if (contadorHoteles == indiceHotelAMejorar) {
@@ -40,50 +147,41 @@ Solucion hotelImprovement (Solucion solucionInicial, int D, const std::vector<Ve
             }
         }
 
-        //std::cout << "\n>> indiceHotelAMejorar: " << indiceHotelAMejorar <<"\n";
+        // >> Búsqueda de vecinos
+        //Para generar todos los vecinos
+        std::vector<Solucion> vecinos; 
 
-        std::vector<Solucion> vecinos;
-
-        for (int i = 0; i < hoteles.size() ; i++) {
+        for (int i = 0; i < hoteles.size() ; i++) { //Se cambiará el hotel seleccionado por cada uno de los hoteles disponibles.
             Solucion vecino = solucionActual;
 
-            if (i == vecino.tour[indiceRealHotelAMejorar].id) {
+            if (i == vecino.tour[indiceRealHotelAMejorar].id) { // Ignora el hecho de reemplazar un hotel por sí mismo.
                 continue;
             }
-            // Reemplazar el hotel seleccionado por el nuevo hotel
-            vecino.tour[indiceRealHotelAMejorar] = hoteles[i];
 
+            vecino.tour[indiceRealHotelAMejorar] = hoteles[i]; // Reemplazar el hotel seleccionado por el nuevo hotel
+
+            //Se revisa que al cambiar el hotel no se exceda el máximo tiempo
+            //disponible. Si excede alguno, ya no es una opción factible.
             std::vector<std::vector<Vertex>> tripsSeparados = dividirVector(vecino.tour);
-
             bool isValid = true;
             for (int i = 0; i<Td.size(); i++) {
                 std::vector<Vertex> trip = tripsSeparados[i];
                 double tripDistance = calcularDistanciaTotal(trip);
 
-                if (tripDistance > Td[i]) {
+                if (tripDistance > Td[i] || verificarChoques(hoteles[i], solucionAct.tour)) {
                     isValid = false;
                 }
             }
 
+            // Si es verdadero, quiere decir que es un vecino factible.
             if (isValid) {
                 vecino.puntajeTotal = calcularPuntajeTotal(vecino.tour); 
                 vecino.tiempoTotal = calcularDistanciaTotal(vecino.tour); 
                 vecinos.push_back(vecino);
             }
-            
         }
 
-        /*
-        std::cout << ">> Vecinos factibles: " << "\n";
-        for (const auto& vecino : vecinos) {
-            std::cout << "Tour: ";
-            for (const auto& vertex : vecino.tour) {
-                std::cout << vertex.type << vertex.id << " ";
-            }
-            std::cout << " | Distancia Total: " << vecino.tiempoTotal << "\n";
-        }
-        */
-
+        // >> Búsqueda del mejor vecino
         Solucion mejorVecino = solucionActual;
         mejorVecino.tiempoTotal = std::numeric_limits<double>::max();
 
@@ -92,25 +190,10 @@ Solucion hotelImprovement (Solucion solucionInicial, int D, const std::vector<Ve
                 mejorVecino = vecino;
             }
         }
-
-        /*
-        if (mejorVecino.tiempoTotal == std::numeric_limits<double>::max()) {
-            std::cout << "\n" <<" >> No existen movimientos factibles";
-        } else {
-            std::cout << "\n" <<" >> Mejor vecino encontrado con distancia total: " << mejorVecino.tiempoTotal << "\n >> Tour: ";
-            for (const auto& vertex : mejorVecino.tour) {
-                std::cout << vertex.type << vertex.id << " ";
-            }
-            std::cout << std::endl;
-        }
-        */
             
-        //Solo si se encuentra un mejor vecino, se continua con la iteración
-        if (mejorVecino.tiempoTotal < solucionActual.tiempoTotal) {
+        if (mejorVecino.tiempoTotal < solucionActual.tiempoTotal) { //Solo si se encuentra un mejor vecino, se continua con la iteración
             solucionActual = mejorVecino;
-            //std::cout << " > El mejor vecino es mejor que la solución actual.\n";
         } else {
-            //std::cout << " > No se encontraron vecinos mejor que la solución actual.\n";
             break; // No hay mejora, salir del bucle
         }
 
@@ -118,29 +201,6 @@ Solucion hotelImprovement (Solucion solucionInicial, int D, const std::vector<Ve
     }
     return solucionActual;
 }
-
-
-Solucion swap(Solucion solucionActual) {
-    Solucion mejorSolucion = solucionActual;
-    double mejorTiempo = std::numeric_limits<double>::max();
-
-    std::vector<std::vector<Vertex>> trips = dividirVector(solucionActual.tour);
-
-    for (auto& trip:trips) {
-        for (size_t i = 1; i < trip.size() - 1; i++) {
-            for (size_t j = i + 1; j < trip.size() - 1; ++j) {
-                std::swap(trip[i], trip[j]);
-
-                
-
-                std::swap(trip[i], trip[j]);
-            }
-        }
-    }
-
-    return mejorSolucion;
-}
-
 
 /**
  * Genero todos los vecinos al realizar el movimiento "Insertar Puntos de Interés"
@@ -151,12 +211,13 @@ Solucion swap(Solucion solucionActual) {
  * @param Td Vector que contiene los tiempos máximos de cada trip
  *
  */
+
 std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual, const std::vector<Vertex>& todosPOIs, const std::vector<Vertex>& todosHoteles, const std::vector<double>& Td) {
+    
     std::vector<Solucion> vecinos;
     std::set<int> poisEnTour;
 
-    // Para revisar si un POI ya está incluido o no
-    for (const auto& item : solucionActual.tour) {
+    for (const auto& item : solucionActual.tour) { // Para revisar si un POI ya está incluido o no
         if (item.type == "P") {
             poisEnTour.insert(item.id);
         }
@@ -166,11 +227,11 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
 
     // Iterar sobre cada POI existentes de la instancia
     for (const auto& poi : todosPOIs) {
-        if (poisEnTour.find(poi.id) != poisEnTour.end()) {
-            continue; // Saltar POIs que ya están en el tour
+        if (poisEnTour.find(poi.id) != poisEnTour.end() || verificarChoques(poi, solucionActual.tour)) {
+            continue; // Saltar POIs que ya están en el tour o si hay choque de coordenadas
         }
 
-        // Solución vacía
+        // >> Búsqueda de los vecinos
         Solucion bestPosition;
         bestPosition.puntajeTotal = 0.0;
         double mejorAumento = std::numeric_limits<double>::max();
@@ -232,9 +293,6 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
 std::vector<Solucion> hillClimbing(int maxRestart, int maxIter,
                       const std::vector<Vertex>& hoteles, const std::vector<Vertex>& pois, 
                       const std::vector<double>& Td, int D) {
-    
-    //Se recibe la solInicial desde fuera, pero se debiera calcular aquí por los restart
-    //Trabajo pendiente
 
     int restart = 0;
     std::vector<Solucion> solucionesGuardadas;
@@ -242,34 +300,17 @@ std::vector<Solucion> hillClimbing(int maxRestart, int maxIter,
     while (restart < maxRestart) {
 
         Solucion solucionActual = generarSolucionInicial(hoteles, pois, Td, D);
+        //printearSoluciones(solucionActual);
         int iteracion = 0;
 
         while (iteracion < maxIter) {
-            //Se generan todos los vecinos
+
+            //Se generan todos los vecinos            
             std::vector<Solucion> vecinos = generarVecinosViaInsercion(solucionActual, pois, hoteles, Td);
 
             if (vecinos.empty()) {
                 break; // No hay más vecinos
             }
-
-            //std::cout << "\n>> Iteración " << iteracion + 1;
-
-            //Para ver todos los vecinos generados, se borrará luego.
-            /*
-            if (vecinos.size() > 0) { 
-                std::cout << "\nVecinos generados:\n";
-                for (const auto& vecino : vecinos) {
-                    std::cout << "Tour: ";
-                    for (const auto& vertex : vecino.tour) {
-                        std::cout << vertex.type << vertex.id << " ";
-                    }
-                    std::cout << std::endl;
-                    std::cout << " | Puntaje Total: " << vecino.puntajeTotal << "\n";
-                    std::cout << " | Distancia Total: " << vecino.tiempoTotal << "\n";
-
-                }
-            }
-            */
 
             Solucion mejorVecino = solucionActual;
             for (const auto& vecino : vecinos) {
@@ -278,21 +319,9 @@ std::vector<Solucion> hillClimbing(int maxRestart, int maxIter,
                 }
             }
 
-            // Imprimir el mejor vecino encontrado en esta iteración
-            /*
-            std::cout << "\n" <<" >> Mejor vecino encontrado con puntaje total: " << mejorVecino.puntajeTotal << "\n >> Tour: ";
-            for (const auto& vertex : mejorVecino.tour) {
-                std::cout << vertex.type << vertex.id << " ";
-            }
-            std::cout << std::endl;
-            */
-
-            //Solo si se encuentra un mejor vecino, se continua con la iteración
-            if (mejorVecino.puntajeTotal > solucionActual.puntajeTotal) {
+            if (mejorVecino.puntajeTotal > solucionActual.puntajeTotal) { //Solo si se encuentra un mejor vecino, se continua con la iteración
                 solucionActual = mejorVecino;
-                //std::cout << " > El mejor vecino es mejor que la solución actual.\n";
             } else {
-                //std::cout << " > No se encontraron vecinos mejor que la solución actual.\n";
                 break; // No hay mejora, salir del bucle
             }    
 
@@ -303,14 +332,11 @@ std::vector<Solucion> hillClimbing(int maxRestart, int maxIter,
 
 
             if (probabilidad < 2) {
-                //std::cout << "\n>> Postprocesamiento Iteración " << iteracion + 1;
-                //std::cout << "\n>> Tiempo sol actual: " << solucionActual.tiempoTotal << "\n";
                 solucionActual = hotelImprovement(solucionActual, D, hoteles, Td);
                 
             } else {
-                //std::cout << "bbbb" << std::endl;
+                solucionActual = swapTour(solucionActual, Td);
             }
-
             iteracion++;
     }
         solucionesGuardadas.push_back(solucionActual);

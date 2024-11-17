@@ -1,5 +1,7 @@
 #include "funcionesAuxiliares.h"
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 /**
  * Calcula la distancia entre dos vértices
@@ -11,9 +13,8 @@ double calcularDistancia(const Vertex& a, const Vertex& b) {
     return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2));
 }
 
-
 /**
- * Divide un tour en los diferentes que lo componen trips
+ * Divide un tour en los diferentes trips que lo componen 
  *
  * @param tour Vector de vértices que contiene diferentes trips
  */
@@ -81,4 +82,26 @@ void printearSoluciones (const Solucion& sol) {
     }
     std::cout << "\n" <<  " Puntaje total recolectado: " << sol.puntajeTotal << std::endl;
     std::cout << " Tiempo total utilizado: " << sol.tiempoTotal << std::endl;
+}
+
+
+/**
+ * Verifica si un vértice (hotel o punto de interés) tiene coordenadas que coincidan con algún vértice
+ * en el tour actual. En caso de que exista un choque de coordenadas, retorna true, en caso contrario,
+ * false.
+ *
+ * @param nuevoVertice Vértice que puede ser un hotel o un punto de interés que se va a comparar con los
+ *                     vértices actuales del tour para buscar posibles choques de coordenadas.
+ * @param tourActual Vector de vértices que representa el tour actual. Esta es la lista de hoteles y 
+ *                   puntos de interés que se evalúa para verificar los choques de coordenadas.
+ */
+bool verificarChoques(Vertex nuevoVertice, const std::vector<Vertex>& tourActual) {
+    for (auto& vertice : tourActual) {
+        if (vertice.x == nuevoVertice.x && vertice.y == nuevoVertice.y) {
+            // Hay choque
+            return true; 
+        }
+    }
+    // No hay choque
+    return false;
 }

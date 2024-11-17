@@ -20,19 +20,15 @@ int main(int argc, char* argv[]) {
     std::vector<Vertex> hoteles;
     std::vector<Vertex> pois;
 
-    int restart = 20;
+    int restart = 400;
     int MAX_ITER = 100;
 
-    //Ler achivo de instancia
-    instances(nombreArchivo, N, H, D, Tmax, Td, hoteles, pois);
+    instances(nombreArchivo, N, H, D, Tmax, Td, hoteles, pois); //Ler achivo de instancia
 
-    //Ejecutar Hill Climbing + MM
-    std::vector<Solucion> mejoresSoluciones = hillClimbing (restart, MAX_ITER, hoteles, pois, Td, D);
+    std::vector<Solucion> mejoresSoluciones = hillClimbing (restart, MAX_ITER, hoteles, pois, Td, D); //Ejecutar Hill Climbing + MM
 
-    //Comparación solución inicial con solución local
+    //Comparación de todas los restarts
     std::cout << "\n - Iteraciones Terminadas - \n";
-
-    int i = 1;
     Solucion mejorSol;
     mejorSol.puntajeTotal = 0.0;
 
@@ -43,7 +39,6 @@ int main(int argc, char* argv[]) {
     }
 
     printearSoluciones(mejorSol);
-
     return 0;
 }
 
