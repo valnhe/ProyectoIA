@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <limits>
 
-#include "hc.h"
+#include "HillClimbing.h"
 #include "randomSolution.h"
 #include "funcionesAuxiliares.h"
 #include "readInstance.h"
