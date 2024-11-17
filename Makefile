@@ -3,13 +3,13 @@ CXXFLAGS= -std=c++20 -g -O2 -Wall
 
 all: proyecto
 
-proyecto: readInstance.o main.o randomSolution.o funcionesAuxiliares.o hc.o
+proyecto: readInstance.o main.o randomSolution.o funcionesAuxiliares.o HillClimbing.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 readInstance.o main.o randomSolution.o: readInstance.h
 randomSolution.o: randomSolution.h
 funcionesAuxiliares.o: funcionesAuxiliares.h
-hc.o: hc.h
+HillClimbing.o: HillClimbing.h
 
 
 clean:
