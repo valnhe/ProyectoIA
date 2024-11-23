@@ -3,6 +3,8 @@
 #include "randomSolution.h"
 #include "funcionesAuxiliares.h"
 #include "HillClimbing.h"
+#include <fstream>
+#include <chrono> 
 
 using namespace std;
 
@@ -20,15 +22,24 @@ int main(int argc, char* argv[]) {
     std::vector<Vertex> hoteles;
     std::vector<Vertex> pois;
 
-    int restart = 5000;
+    std::vector<Solucion> ejecuciones;
+    int restart = 10;
     int MAX_ITER = 100;
 
     instances(nombreArchivo, N, H, D, Tmax, Td, hoteles, pois); //Ler achivo de instancia
 
-    std::vector<Solucion> mejoresSoluciones = hillClimbing (restart, MAX_ITER, hoteles, pois, Td, D); //Ejecutar Hill Climbing + MM
+    //Limpia el nombre para pasarselo al algoritmo. Sirve para saber si una instancia fue
+    //incapaz de encontrar una secuencia factible de hoteles.
+    std::string nombre_archivo;
+     size_t pos = nombreArchivo.find_last_of("/");  //
+    if (pos != std::string::npos) {
+        nombre_archivo = nombreArchivo.substr(pos + 1);
+    } else {
+    }
 
-    //Comparación de todas los restarts
-    std::cout << "\n - Iteraciones Terminadas - \n";
+
+    std::vector<Solucion> mejoresSoluciones = hillClimbing(restart, MAX_ITER, hoteles, pois, Td, D, nombre_archivo); // Ejecutar Hill Climbing
+
     Solucion mejorSol;
     mejorSol.puntajeTotal = 0.0;
 
