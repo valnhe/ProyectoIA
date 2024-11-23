@@ -7,6 +7,6 @@
 
 std::vector<Solucion> hillClimbing(int restart, int maxIter,
                       const std::vector<Vertex>& hoteles, const std::vector<Vertex>& pois, 
-                      const std::vector<double>& Td, int D);
+                      const std::vector<double>& Td, int D, const std::string& nombreArchivo);
 
 #endif

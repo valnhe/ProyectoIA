@@ -5,6 +5,7 @@
 #include <set>
 #include <algorithm>
 #include <limits>
+#include <fstream>
 
 #include "HillClimbing.h"
 #include "randomSolution.h"
@@ -290,56 +291,64 @@ std::vector<Solucion> generarVecinosViaInsercion(const Solucion& solucionActual,
 
 std::vector<Solucion> hillClimbing(int maxRestart, int maxIter,
                       const std::vector<Vertex>& hoteles, const std::vector<Vertex>& pois, 
-                      const std::vector<double>& Td, int D) {
+                      const std::vector<double>& Td, int D,
+                      const std::string& nombreArchivo) {
 
     int restart = 0;
     std::vector<Solucion> solucionesGuardadas;
 
     while (restart < maxRestart) {
 
-        Solucion solucionActual = generarSolucionInicial(hoteles, pois, Td, D);
-        //printearSoluciones(solucionActual);
-        int iteracion = 0;
+        Solucion solucionActual = generarSolucionInicial(hoteles, pois, Td, D, nombreArchivo);
 
-        while (iteracion < maxIter) {
+         if (solucionActual.puntajeTotal > 0) { //Revisa que efectivamente se haya podido crear una solución inicial
+            int iteracion = 0;
 
-            //Se generan todos los vecinos            
-            std::vector<Solucion> vecinos = generarVecinosViaInsercion(solucionActual, pois, hoteles, Td);
+            while (iteracion < maxIter) {
 
-            if (vecinos.empty()) {
-                break; // No hay más vecinos
-            }
+                //Se generan todos los vecinos            
+                std::vector<Solucion> vecinos = generarVecinosViaInsercion(solucionActual, pois, hoteles, Td);
 
-            Solucion mejorVecino = solucionActual;
-            for (const auto& vecino : vecinos) {
-                if (vecino.puntajeTotal > mejorVecino.puntajeTotal) {
-                    mejorVecino = vecino;
+                if (vecinos.empty()) {
+                    break; // No hay más vecinos
                 }
-            }
 
-            if (mejorVecino.puntajeTotal > solucionActual.puntajeTotal) { //Solo si se encuentra un mejor vecino, se continua con la iteración
-                solucionActual = mejorVecino;
-            } else {
-                break; // No hay mejora, salir del bucle
-            }    
+                Solucion mejorVecino = solucionActual;
+                for (const auto& vecino : vecinos) {
+                    if (vecino.puntajeTotal > mejorVecino.puntajeTotal) {
+                        mejorVecino = vecino;
+                    }
+                }
 
-            std::random_device rd; 
-            std::mt19937 gen(rd());
-            std::uniform_int_distribution<> distribucion(0, 2);
-            double probabilidad = distribucion(gen);
+                if (mejorVecino.puntajeTotal > solucionActual.puntajeTotal) { //Solo si se encuentra un mejor vecino, se continua con la iteración
+                    solucionActual = mejorVecino;
+                } else {
+                    break; // No hay mejora, salir del bucle
+                }    
+
+                std::random_device rd; 
+                std::mt19937 gen(rd());
+                std::uniform_int_distribution<> distribucion(0, 2);
+                double probabilidad = distribucion(gen);
 
 
-            if (probabilidad < 2) {
-                solucionActual = hotelImprovement(solucionActual, D, hoteles, Td);
-                
-            } else {
-                solucionActual = swapTour(solucionActual, Td);
-            }
+                if (probabilidad < 2) {
+                    solucionActual = hotelImprovement(solucionActual, D, hoteles, Td);
+                    
+                } else {
+                    solucionActual = swapTour(solucionActual, Td);
+                }
 
-            iteracion++;
-    }
-        solucionesGuardadas.push_back(solucionActual);
-        restart++;
+                iteracion++;
+            }  
+        
+            solucionesGuardadas.push_back(solucionActual);
+            restart++;
+
+        } else {
+            restart++;
+        }
+
     }
     return solucionesGuardadas; 
 }
