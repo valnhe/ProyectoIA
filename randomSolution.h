@@ -5,6 +5,6 @@
 #include <string>
 #include "readInstance.h"
 
-Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles, const std::vector<Vertex>& poisDisponibles, const std::vector<double>& Td, int D);
+Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles, const std::vector<Vertex>& poisDisponibles, const std::vector<double>& Td, int D, const std::string& nombreArchivo);
 
 #endif

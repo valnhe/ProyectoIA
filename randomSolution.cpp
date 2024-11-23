@@ -15,8 +15,8 @@
 
 std::vector<Vertex> seleccionarHotelesAleatorios(int D, 
                                                     const std::vector<Vertex>& hoteles, 
-                                                    const std::vector<double>& Td) {
-    const int MAX_GLOBAL_ITER = 100; // Número máximo de iteraciones globales
+                                                    const std::vector<double>& Td, const std::string& nombreArchivo) {
+    const int MAX_GLOBAL_ITER = 50; // Número máximo de iteraciones globales
 
     std::random_device rd; 
     std::mt19937 gen(rd());
@@ -80,7 +80,7 @@ std::vector<Vertex> seleccionarHotelesAleatorios(int D,
     }
 
     // Si tras 20 iteraciones globales no se encuentra nada:
-    std::cout << "No se pudo encontrar una combinación válida de hoteles después de " << MAX_GLOBAL_ITER << " intentos." << std::endl;
+    std::cout << "No se pudo encontrar una combinación válida de hoteles después de " << MAX_GLOBAL_ITER << " intentos en la instancia" << nombreArchivo << std::endl;
     return {};
 }
 
@@ -168,15 +168,15 @@ std::vector<Vertex> creadorTrips(const Vertex& h1,
 Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles, 
                                         const std::vector<Vertex>& pois, 
                                         const std::vector<double>& Td, 
-                                        int D) {
+                                        int D, const std::string& nombreArchivo) {
     
-    std::vector<Vertex> hotelesSeleccionados = seleccionarHotelesAleatorios(D, hoteles, Td);   
+    std::vector<Vertex> hotelesSeleccionados = seleccionarHotelesAleatorios(D, hoteles, Td, nombreArchivo);   
     std::vector<Vertex> poisSeleccionados; // Acá se guardan los índices de los POIs ya utilizados
 
     Solucion resultado;
     resultado.puntajeTotal = 0.0;
 
-    if (hoteles.size() > 1) {
+    if (hotelesSeleccionados.size() > 2) {
         // Iterar sobre los pares de hoteles seleccionados, es decir, se trabaja en cada Trip
         for (size_t i = 0; i < hotelesSeleccionados.size() - 1; ++i) {
 
@@ -200,7 +200,7 @@ Solucion generarSolucionInicial(const std::vector<Vertex>& hoteles,
         return resultado;
     }
 
-    return {};
+    return resultado;
 }
 
 
